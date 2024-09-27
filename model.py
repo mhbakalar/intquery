@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import pandas as pd
+import random
 
 from torch.utils.tensorboard import SummaryWriter
 import os
@@ -17,16 +18,6 @@ def get_tensorboard_writer(log_dir="runs"):
 # Create a function to log metrics to TensorBoard
 def log_metrics(logger, epoch, train_loss):
     logger.add_scalar('Loss/Train', train_loss, epoch)
-
-# Note: You'll need to modify your main training function to use these functions.
-# For example, in your main training loop:
-# writer = get_tensorboard_writer()
-# ...
-# for epoch in range(num_epochs):
-#     ...
-#     log_metrics(writer, epoch, train_loss)
-# ...
-# writer.close()
 
 # Define the MLP model
 class DNAScorePredictor(nn.Module):
@@ -73,15 +64,15 @@ def read_data(file_path, decoy_path, decoy_mul=0):
 
     if decoy_mul > 0:
         # Select random sequences from decoy_df
-        decoy_indices = np.random.choice(len(decoy_df), size=num_samples*decoy_mul)
-        decoy_X = decoy_df['seq'].values[decoy_indices]
+        num_samples = int(len(X)*decoy_mul)
+        decoy_X = decoy_df['seq'].sample(n=num_samples, replace=True)
         decoy_y = np.zeros(len(decoy_X))
 
         X = np.concatenate([X, decoy_X])
         y = np.concatenate([y, decoy_y])
 
     # Log transform scores
-    y = 1 + np.log(y)
+    y = np.log(1 + y)
 
     return X, y
 
@@ -119,6 +110,22 @@ def train_model(model, X, y, epochs=100, batch_size=32, log=False):
         if (epoch + 1) % 10 == 0:
             print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
 
+def eval_model(model, X, batch_size=32):
+    model.eval()
+    # Move data to GPU if available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    
+    predictions = []
+    for i in range(0, len(X), batch_size):
+        batch_X = X[i:i+batch_size]        
+        inputs = torch.FloatTensor(np.array([one_hot_encode(seq) for seq in batch_X])).to(device)
+        outputs = model(inputs)
+        predictions.extend(outputs.squeeze().tolist())
+    
+    return predictions
+
+
 # Main execution
 if __name__ == "__main__":
     # Read data from file
@@ -139,3 +146,10 @@ if __name__ == "__main__":
     # Train the model
     train_model(model, X, y, log=True)
     print("Training completed!")
+
+    # Evaluate the model
+    predictions = eval_model(model, X)
+    
+    # Compute the Pearson correlation coefficient
+    pearson_corr = np.corrcoef(y, predictions)[0, 1]
+    print(f"Pearson correlation coefficient: {pearson_corr:.4f}")
