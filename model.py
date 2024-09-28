@@ -19,27 +19,29 @@ def get_tensorboard_writer(log_dir="runs"):
 def log_metrics(logger, epoch, train_loss):
     logger.add_scalar('Loss/Train', train_loss, epoch)
 
-# Define the MLP model
-class DNAScorePredictor(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(DNAScorePredictor, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu1 = nn.ReLU()
-        self.dropout1 = nn.Dropout(0.2)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.relu2 = nn.ReLU()
-        self.dropout2 = nn.Dropout(0.2)
-        self.fc3 = nn.Linear(hidden_size, output_size)
+# Define the model
+class MLP(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size, dropout_rate=0.2):
+        super(MLP, self).__init__()
+        
+        layers = []
+        prev_size = input_size
+        
+        for hidden_size in hidden_sizes:
+            layers.extend([
+                nn.Linear(prev_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(dropout_rate)
+            ])
+            prev_size = hidden_size
+        
+        layers.append(nn.Linear(prev_size, output_size))
+        
+        self.model = nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.fc1(x)
-        x = self.relu1(x)
-        x = self.dropout1(x)
-        x = self.fc2(x)
-        x = self.relu2(x)
-        x = self.dropout2(x)
-        x = self.fc3(x)
-        return x
+        y = self.model(x)
+        return y
 
 # Function to one-hot encode DNA sequences
 def one_hot_encode(sequence):
@@ -123,7 +125,7 @@ def eval_model(model, X, batch_size=32):
         outputs = model(inputs)
         predictions.extend(outputs.squeeze().tolist())
     
-    return predictions
+    return np.array(predictions)
 
 
 # Main execution
