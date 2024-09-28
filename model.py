@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import pandas as pd
-import random
 
 from torch.utils.tensorboard import SummaryWriter
 import os
@@ -58,6 +57,13 @@ def generate_dummy_data(num_samples, seq_length):
 # Read data from csv
 def read_data(file_path, decoy_path, decoy_mul=0):
     df = pd.read_csv(file_path)
+
+    # Group by genomic coordinates and take the mean of count, ignoring strand
+    df = df.groupby(['reference_name', 'seq_start', 'seq_end']).agg({
+        'count': 'mean',
+        'seq': 'first'  # Keep the first sequence for each group
+    }).reset_index()
+    
     X = df['seq'].values
     y = df['count'].values
 
