@@ -65,12 +65,12 @@ def read_data(file_path, decoy_path, decoy_mul=0):
     }).reset_index()
     
     X = df['seq'].values
-    y = df['count'].values
-
-    # Add decoy sequences
-    decoy_df = pd.read_csv(decoy_path)
+    y = df['count'].values    
 
     if decoy_mul > 0:
+        # Add decoy sequences
+        decoy_df = pd.read_csv(decoy_path)
+
         # Select random sequences from decoy_df
         num_samples = int(len(X)*decoy_mul)
         decoy_X = decoy_df['seq'].sample(n=num_samples, replace=True)
@@ -85,9 +85,11 @@ def read_data(file_path, decoy_path, decoy_mul=0):
     return X, y
 
 # Main training function
-def train_model(model, X, y, epochs=100, batch_size=32, log=False):
+def train_model(model, X, y, epochs=100, batch_size=32, lr=1e-3, log=False):
+    
+    # Initialize optimizer
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     if log:
         logger = get_tensorboard_writer()
@@ -95,7 +97,14 @@ def train_model(model, X, y, epochs=100, batch_size=32, log=False):
         logger = None
     
     # Move data to GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+    
+    print(f"Training on device: {device}")
     model.to(device)
     
     for epoch in range(epochs):
