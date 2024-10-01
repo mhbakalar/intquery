@@ -84,6 +84,13 @@ def read_data(file_path, decoy_path, decoy_mul=0):
 
     return X, y
 
+def select_data_subset(X, y, n_samples):
+        # Sample indices by weight
+        weights = y
+        weights = weights / weights.sum()
+        indices = np.random.choice(np.arange(len(X)), size=n_samples, p=weights)
+        return X[indices], y[indices]
+
 # Main training function
 def train_model(model, X, y, epochs=100, n_samples=10000, batch_size=32, lr=1e-3, log=False):
     
@@ -106,13 +113,6 @@ def train_model(model, X, y, epochs=100, n_samples=10000, batch_size=32, lr=1e-3
     
     print(f"Training on device: {device}")
     model.to(device)
-
-    def select_data_subset(X, y, n_samples):
-        # Sample indices by weight
-        weights = y
-        weights = weights / weights.sum()
-        indices = np.random.choice(np.arange(len(X)), size=n_samples, p=weights)
-        return X[indices], y[indices]
     
     X_select, y_select = select_data_subset(X, y, n_samples=n_samples)
 
