@@ -1,7 +1,6 @@
-# intquery
-Deep learning prediction of LSI off-targets
-
 ## Overview
+Intquery: Deep learning prediction of LSI off-targets
+
 IntQuery leverages deep learning to predict LSI activity at candidate off-target sites across the genome, offering an **in silico** method for LSI off-target prediction.
 
 # Abstract
