@@ -3,7 +3,7 @@ Intquery: Deep learning prediction of LSI off-targets
 
 IntQuery leverages deep learning to predict LSI activity at candidate off-target sites across the genome, offering an **in silico** method for LSI off-target prediction.
 
-# Abstract
+## Abstract
 Large Serine Integrases (LSIs) hold significant therapeutic promise due to their ability to efficiently incorporate gene-sized DNA into the human genome, offering a method to integrate healthy genes in patients with monogenic disorders or to insert gene circuits for the development of advanced cell therapies. To advance the application of LSIs for human therapeutic applications, new technologies and analytical methods for predicting and characterizing off-target recombination by LSIs are required. It is not experimentally tractable to validate off-target editing at all potential off-target sites in therapeutically relevant cell types because of sample limitations and genetic variation in the human population. To address this gap, we constructed a deep learning model named IntQuery that can predict LSI activity at candidate off-target sites genome-wide. For Bxb1 integrase, IntQuery was trained on quantitative off-target data from 410,776 sequences discovered by Cryptic-Seq, an unbiased in vitro discovery technology for LSI off-target recombination. We show that IntQuery can accurately predict in vitro LSI activity, providing a tool for in silico off-target prediction of large serine integrases to advance therapeutic applications.
 
 ## Scripts and Notebooks
