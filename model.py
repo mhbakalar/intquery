@@ -145,40 +145,13 @@ def eval_model(model, X, batch_size=32):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     
+    # Predict
     predictions = []
-    for i in range(0, len(X), batch_size):
-        batch_X = X[i:i+batch_size]        
-        inputs = torch.FloatTensor(np.array([one_hot_encode(seq) for seq in batch_X])).to(device)
-        outputs = model(inputs)
-        predictions.extend(outputs.squeeze().tolist())
+    with torch.no_grad():
+        for i in range(0, len(X), batch_size):
+            batch_X = X[i:i+batch_size]        
+            inputs = torch.FloatTensor(np.array([one_hot_encode(seq) for seq in batch_X])).to(device)
+            outputs = model(inputs)
+            predictions.extend(outputs.squeeze().tolist())
     
     return np.array(predictions)
-
-
-# Main execution
-if __name__ == "__main__":
-    # Read data from file
-    seq_length = 46
-    file_path = 'data/cs_data.csv'
-    decoy_path = 'data/cs_data.csv'
-    X, y = read_data(file_path, decoy_path, decoy_mul=0)
-
-    # Mask the central dinucleotide from X
-    X = np.array([seq[:22] + 'NN' + seq[24:] for seq in X])
-
-    # Initialize the model
-    input_size = seq_length * 5  # 4 bases + N, one-hot encoded
-    hidden_size = 128
-    output_size = 1
-    model = DNAScorePredictor(input_size, hidden_size, output_size)
-    
-    # Train the model
-    train_model(model, X, y, log=True)
-    print("Training completed!")
-
-    # Evaluate the model
-    predictions = eval_model(model, X)
-    
-    # Compute the Pearson correlation coefficient
-    pearson_corr = np.corrcoef(y, predictions)[0, 1]
-    print(f"Pearson correlation coefficient: {pearson_corr:.4f}")
